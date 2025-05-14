@@ -1,4 +1,8 @@
+import json
+import re
+import ast
 from zhipuai import ZhipuAI
+
 
 from src.utils.log import get_console_logger
 
@@ -38,7 +42,14 @@ class ChatGLM():
             messages=messages,
         )
         assistant_msg = resp.choices[0].message.content
+        if self.model == "glm-z1-flash":
+            assistant_msg = assistant_msg.split('</think>')[-1].strip()
 
         new_history = history[:] if history else []
         new_history.append([query, assistant_msg])
         return assistant_msg, new_history
+
+if __name__ == "__main__":
+    llm = ChatGLM(api_key="xxx", model="glm-z1-flash")
+    msg, _ = llm.answer("Hello", [])
+    print(msg)

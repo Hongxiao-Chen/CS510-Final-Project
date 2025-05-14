@@ -6,6 +6,13 @@ Place knowledge bases (folders containing similar Word documents) under ```data/
 
 Place BGE model in ```src/models/baai/bge-base-en-v1.5``` or use the ```BAAI/bge-base-en-v1.5```
 
+Create a file under the root directory named ```config.json```, and add your API keys into it. For example:
+```json
+{
+  "ChatGLM_api_key": "xxx"
+}
+```
+
 ## How to use
 The interface is located at ```frontends/ui.py```. After running, access http://127.0.0.1:7860. 
 Operation steps are shown in the figure:

@@ -11,6 +11,7 @@ from src.embeddings.csv_embedding import embed_folder
 from src.embeddings.baai import BAAIEmbeddings
 from src.storages.faiss_search import FaissIdx
 from src.llms.chatglm import ChatGLM
+from src.llms.gemini import Gemini
 from src.utils.hash import get_folder_hash
 from src.utils.log import get_console_logger
 
@@ -23,11 +24,14 @@ embedded_data_path = "..\\..\\data\\embeddata"
 with open("../../config.json") as f:
     config = json.load(f)
     ChatGLM_api_key = config["ChatGLM_api_key"]
+    Gemini_api_key = config["Gemini_api_key"]
 
 # TODO: config part, modify before running on a new machine
 model = BAAIEmbeddings("../models/bge-base-en-v1.5") # change it into "BAAI/bge-base-en-v1.5" on new machine
 faiss_retriever = FaissIdx(model)
-llm = ChatGLM(api_key=ChatGLM_api_key, model="glm-4-flash")
+chatglm_4_flash = ChatGLM(api_key=ChatGLM_api_key, model="glm-4-flash")
+chatglm_z1_flash = ChatGLM(api_key=ChatGLM_api_key, model="glm-z1-flash")
+gemini_2_flash = Gemini(api_key=Gemini_api_key, model="gemini-2.0-flash")
 
 startup_prompt = [
         {"role": "user", "content": "You are a highly skilled professional AI assistant specialized in Retrieval-Augmented Generation. Your primary goal is to help users by combining deep language understanding with relevant external knowledge retrieved from provided documents."},
@@ -61,7 +65,7 @@ def load_kg(kg_name):
         if curr_hash == stored_hash:
             faiss_retriever.add_folder(output_kg_path, embed_kg_path)
             pythoncom.CoUninitialize()
-            return "Successfully loaded" + kg_name + "（no update to knowledge base, using cache）"
+            return "Successfully loaded " + kg_name + "（no update to knowledge base, using cache）"
     else:  # Updated, embedding again
         # Convert to CSV
         folder_to_csv(input_kg_path)
@@ -82,8 +86,18 @@ def clear_session():
     return [], [], ""
 
 
-def chat_bot_response(message, top_k, history, search):
+def chat_bot_response(message, top_k, history, search, llm):
     """Accept user input，if is 'dict', convert to table，else hand to 'predict' method to search"""
+    logger.info("Using " + llm)
+    if llm == "ChatGLM4-Flash":
+        llm_model = chatglm_4_flash
+    elif llm == "Gemini-2.0-Flash":
+        llm_model = gemini_2_flash
+    elif llm == "ChatGLM-Z1-Flash":
+        llm_model = chatglm_z1_flash
+    else:
+        llm_model = None
+
     if history is None:
         history = []
     if message.startswith("{") and message.endswith("}"):
@@ -91,10 +105,10 @@ def chat_bot_response(message, top_k, history, search):
         history.append((message, table))
         return history, history, "", search
     else:
-        return predict(message, top_k, history)
+        return predict(message, top_k, history, llm_model)
 
 
-def predict(message, top_k, history):
+def predict(message, top_k, history, llm):
     """
     Send message to LLM and FAISS
     Args:
@@ -144,9 +158,11 @@ with gr.Blocks() as demo:
             large_language_model = gr.Dropdown(
                 [
                     "ChatGLM4-Flash",
+                    "Gemini-2.0-Flash",
+                    "ChatGLM-Z1-Flash"
                 ],
                 label="Large Language Model",
-                value="ChatGLM4-Flash")
+                value="Gemini-2.0-Flash")
 
             top_k = gr.Slider(1,
                               20,
@@ -185,7 +201,7 @@ with gr.Blocks() as demo:
 
         # send
         send.click(chat_bot_response,
-                   inputs=[message, top_k, state, search],
+                   inputs=[message, top_k, state, search, large_language_model],
                    outputs=[chatbot, state, message, search])
 
         # clean history
@@ -196,7 +212,7 @@ with gr.Blocks() as demo:
 
         # enter key
         message.submit(chat_bot_response,
-                       inputs=[message, top_k, state, search],
+                       inputs=[message, top_k, state, search, large_language_model],
                        outputs=[chatbot, state, message, search])
 
 

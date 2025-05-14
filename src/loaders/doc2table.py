@@ -366,7 +366,7 @@ def doc2table(file: File, tags: Tags) -> tuple[list[Object], list]:
 if __name__ == "__main__":
     tags = load_tags()
     file = File(file_path=
-                     "D:\\CS\\CS510\\final-project\\data\\inputdata\\Store\\January_2025_Sales_Report.docx")
+                     "D:\\CS\\CS510\\CS510-Final-Project\\data\\inputdata\\Store\\January_2025_Sales_Report.docx")
 
     tbs, txs = doc2table(file, tags)
     for i in tbs:
