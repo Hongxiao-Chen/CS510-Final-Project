@@ -1,6 +1,10 @@
 # RAG System Specialized for Tabular Documents
 
 ### Pre-run Preparation：
+Install the require packages by:
+```commandline
+pip install -r requirements.txt
+```
 
 Place knowledge bases (folders containing similar Word documents) under ```data/inputdata```. The folder name will be used as the knowledge base name.
 
@@ -17,6 +21,7 @@ Create a file under the root directory named ```config.json```, and add your API
 The interface is located at ```frontends/ui.py```. After running, access http://127.0.0.1:7860. 
 Operation steps are shown in the figure:
 
+![Inst](./img/gradio.png)
 
 (Sending the raw table dict from search results to the chatbot can quickly convert it to readable format)
 
@@ -42,6 +47,9 @@ Operation steps are shown in the figure:
 
 ### frontends:
 ```ui.py``` Gradio UI, switch knowledge bases, receive user input, return results
+
+### llms:
+```chatglm.py, gemini.py``` Wrap-up LLMs for easy API calls and response extraction
 
 ### utils:
 ```hash.py``` Hash files in folders based on filenames and modification dates
